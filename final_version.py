@@ -38,7 +38,7 @@ model = YOLO('yolo/yolov8x.pt')
 model.to("cuda")
 
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-canvas_writer = cv2.VideoWriter('test.mp4', fourcc, 30, (canvas_width, canvas_height))
+canvas_writer = cv2.VideoWriter('output.mp4', fourcc, 30, (canvas_width, canvas_height))
 
 
 
