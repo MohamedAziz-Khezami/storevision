@@ -24,6 +24,12 @@ cap = cv2.VideoCapture("supermarket.mp4")
 frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
+# Define the size and position of the video frame on the canvas
+video_width = 600  # Resize the video width for the canvas
+video_height = 400  # Resize the video height for the canvas
+video_x = 50  # Top-left x coordinate for video placement on the canvas
+video_y = 50  # Top-left y coordinate for video placement on the canvas
+
 # Create a blank canvas for the 2D tracks
 canvas_height, canvas_width = 720, 2000
 canvas = np.zeros((canvas_height, canvas_width, 3), dtype=np.uint8)
@@ -35,8 +41,6 @@ model.to("cuda")
 # Initialize video writer for the canvas
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
 canvas_writer = cv2.VideoWriter('test.mp4', fourcc, 30, (canvas_width, canvas_height))
-
-
 
 # Initialize the DeepSORT tracker
 tracker = DeepSort(max_age=30)
@@ -211,52 +215,39 @@ while True:
         if simplex >= 0:
             triangle_3d = points_3d[triangles.simplices[simplex]]
             triangle_2d = points_2d[triangles.simplices[simplex]]
-            M = get_affine_transform(triangle_3d.astype(np.float32), triangle_2d.astype(np.float32))
+
+            # Calculate the affine transformation matrix for the triangle
+            M = get_affine_transform(triangle_3d, triangle_2d)
+
+            # Transform the point using the affine transformation
             transformed_cx, transformed_cy = apply_affine_transform([cx, cy], M)
 
-            # Draw the point
-            cv2.circle(canvas, (transformed_cx, transformed_cy), 4, color, -1)
+            # Draw points on the canvas
+            cv2.circle(canvas, (transformed_cx, transformed_cy), 5, color, -1)
+            cv2.putText(canvas, f"{track_id}: {gender}, {age}", (transformed_cx, transformed_cy), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
 
-        # Draw the bounding box and display the gender and age
-        cv2.rectangle(img, (x1, y1), (x2, y2), color, 2)
-        if gender is not None and age is not None:
-            cv2.putText(img, f"{gender}, {age}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
-    
-    # Clear the previous counts on the canvas
-    cv2.rectangle(canvas, (900, 0), (1550, 150), (0, 0, 0), -1)  # Clear area for counts
-    cv2.rectangle(canvas, (900, 60), (1550, 250), (0, 0, 0), -1)  # Clear area for counts
+    # Draw male and female counts on the canvas
+    cv2.putText(canvas, f"Unique Males: {unique_male_count}", (900, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+    cv2.putText(canvas, f"Unique Females: {unique_female_count}", (900, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2)
+    cv2.putText(canvas, f"Total Detected: {total_detected_count}", (900, 90), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
+    # Resize the video frame to fit the canvas and display it
+    resized_video_frame = cv2.resize(img, (video_width, video_height))
+    canvas[video_y:video_y + video_height, video_x:video_x + video_width] = resized_video_frame
 
-    # Draw the total unique count on the canvas
-    # Display the total number of detected people (from YOLO) on the canvas
-    cv2.putText(canvas, f"Total Detected People: {total_detected_count}", (900, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
-
-    cv2.putText(canvas, f"Unique Males: {unique_male_count}", (900, 60),cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 1)
-    cv2.putText(canvas, f"Unique Females: {unique_female_count}", (900, 90), cv2.FONT_HERSHEY_SIMPLEX,1, (255, 0, 255), 1)
-     
-
-    
-        # Draw rectangles
-    cv2.rectangle(canvas, (710, 320) , (720, 550), (255, 255, 255), -1, cv2.LINE_AA)
-    cv2.rectangle(canvas, (300, 230), (400, 450), (255, 255, 255), -1, cv2.LINE_AA)
-    cv2.rectangle(canvas, (810, 150), (820, 600), (255, 255, 255), -1, cv2.LINE_AA)
-
-    
-    # Calculate the most prevalent age from tracked IDs
-    if age_info:
-        age_list = [age_info[track_id] for track_id in age_info if track_id in footprints]
-        if age_list:
-            most_common_age = Counter(age_list).most_common(1)
-            if most_common_age:
-                prevalent_age = most_common_age[0][0]
-                cv2.putText(canvas, f"Most Prevalent Age: {prevalent_age}", (900, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-    # Display the images
-    cv2.imshow("Tracked People", img)
+    # Show the canvas with tracking and other information
     cv2.imshow("Canvas", canvas)
+
+    # Write to the output video
     canvas_writer.write(canvas)
-    frame_count += 1  # Increment frame count
+
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
-canvas_writer.release()
+
+    # Increment frame count
+    frame_count += 1
+
+# Release video capture and writer objects
 cap.release()
+canvas_writer.release()
 cv2.destroyAllWindows()
