@@ -1,4 +1,4 @@
-# **StoreVision**
+# **🛒StoreVision**
 
 StoreVision is an advanced video analytics application designed to track and analyze customer movements in retail environments such as stores, malls, and supermarkets. By providing detailed insights into foot traffic and customer paths, it helps managers optimize store layouts, identify high-traffic "hot spots," and create targeted marketing strategies based on customer behavior.
 
@@ -34,9 +34,11 @@ StoreVision is an advanced video analytics application designed to track and ana
 
 ## Screenshots
 
+![Capture d’écran 2024-09-25 193353](https://github.com/user-attachments/assets/b72f2689-d8f8-4ab9-a38f-d58f0fff783b)
 
 
 
+![Capture d’écran 2024-09-25 193420](https://github.com/user-attachments/assets/4ab556d4-0e9b-48b5-bd6a-3f682f5e792e)
 
 
 
